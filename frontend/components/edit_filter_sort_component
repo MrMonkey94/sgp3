@@ -1,0 +1,118 @@
+import React, { useState } from 'react';
+import { List, ArrowUpDown, Zap, Search, Edit, Plus, ChevronDown, MoreHorizontal } from 'lucide-react';
+
+const InteractiveToolbar = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isNewMenuOpen, setIsNewMenuOpen] = useState(false);
+
+  const handleAction = (action) => {
+    console.log(`${action} action triggered`);
+    // Implement the actual functionality for each action here
+  };
+
+  const newOptions = ['Add Item', 'Add Column', 'Add View'];
+
+  return (
+    <div className="bg-white shadow-md rounded-lg p-2 flex items-center space-x-2">
+      <div className="relative group">
+        <button 
+          className="p-2 rounded hover:bg-gray-100 transition-colors duration-200"
+          onClick={() => handleAction('filter')}
+          title="Filter"
+        >
+          <List size={20} />
+        </button>
+        <span className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 bottom-full left-1/2 transform -translate-x-1/2 mb-1">
+          Filter
+        </span>
+      </div>
+
+      <div className="relative group">
+        <button 
+          className="p-2 rounded hover:bg-gray-100 transition-colors duration-200"
+          onClick={() => handleAction('sort')}
+          title="Sort"
+        >
+          <ArrowUpDown size={20} />
+        </button>
+        <span className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 bottom-full left-1/2 transform -translate-x-1/2 mb-1">
+          Sort
+        </span>
+      </div>
+
+      <div className="relative group">
+        <button 
+          className="p-2 rounded hover:bg-gray-100 transition-colors duration-200"
+          onClick={() => handleAction('automate')}
+          title="Automate"
+        >
+          <Zap size={20} />
+        </button>
+        <span className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 bottom-full left-1/2 transform -translate-x-1/2 mb-1">
+          Automate
+        </span>
+      </div>
+
+      <div className="relative flex-grow">
+        <input
+          type="text"
+          placeholder="Search..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-8 pr-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <Search size={18} className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
+      </div>
+
+      <div className="relative group">
+        <button 
+          className="p-2 rounded hover:bg-gray-100 transition-colors duration-200"
+          onClick={() => handleAction('edit')}
+          title="Edit"
+        >
+          <Edit size={20} />
+        </button>
+        <span className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 bottom-full left-1/2 transform -translate-x-1/2 mb-1">
+          Edit
+        </span>
+      </div>
+
+      <div className="relative group">
+        <button 
+          className="p-2 rounded hover:bg-gray-100 transition-colors duration-200"
+          onClick={() => handleAction('more')}
+          title="More options"
+        >
+          <MoreHorizontal size={20} />
+        </button>
+        <span className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 bottom-full left-1/2 transform -translate-x-1/2 mb-1">
+          More
+        </span>
+      </div>
+
+      <div className="relative">
+        <button 
+          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors duration-200 flex items-center"
+          onClick={() => setIsNewMenuOpen(!isNewMenuOpen)}
+        >
+          New <ChevronDown size={16} className="ml-1" />
+        </button>
+        {isNewMenuOpen && (
+          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+            {newOptions.map((option, index) => (
+              <button
+                key={index}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                onClick={() => handleAction(option)}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default InteractiveToolbar;
