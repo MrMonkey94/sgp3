@@ -1,0 +1,65 @@
+// Initialize a JavaScript file
+import React, { useState, useEffect } from 'react';
+import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import axios from 'axios';
+
+// Import components (you'll need to create these)
+import Header from './components/Header';
+import Sidebar from './components/Sidebar';
+import Dashboard from './components/Dashboard';
+import Projects from './components/Projects';
+import Tasks from './components/Tasks';
+import Footer from './components/Footer';
+
+// Create a theme instance
+const theme = createTheme({
+  // Customize your theme here
+});
+
+function App() {
+  const [projects, setProjects] = useState([]);
+  const [tasks, setTasks] = useState([]);
+
+  useEffect(() => {
+    // Fetch data from your PHP backend
+    const fetchData = async () => {
+      try {
+        const projectsResponse = await axios.get('/api/projects.php');
+        setProjects(projectsResponse.data);
+
+        const tasksResponse = await axios.get('/api/tasks.php');
+        setTasks(tasksResponse.data);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router>
+        <div className="App">
+          <Header />
+          <div className="main-content">
+            <Sidebar />
+            <main>
+              <Routes>
+                <Route path="/" element={<Dashboard projects={projects} tasks={tasks} />} />
+                <Route path="/projects" element={<Projects projects={projects} />} />
+                <Route path="/tasks" element={<Tasks tasks={tasks} />} />
+              </Routes>
+            </main>
+          </div>
+          <Footer />
+        </div>
+      </Router>
+    </ThemeProvider>
+  );
+}
+
+export default App;
+
