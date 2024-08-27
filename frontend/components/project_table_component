@@ -1,0 +1,265 @@
+import React, { useState, useEffect } from 'react';
+import { Calendar, Search, Plus, ChevronDown, ChevronLeft, ChevronRight, Filter, Edit, Check, X } from 'lucide-react';
+
+const initialProjectsData = [
+  { id: 1, name: 'Project 1 Lorem Ipsum', status: 'Planning', start: '01/02/2024', end: '01/02/2024', priority: 'Low', owner: 'Myname', avatar: '👨‍💼' },
+  { id: 2, name: 'Project 2 Lorem Ipsum', status: 'WIP', start: '01/02/2024', end: '01/02/2024', priority: 'Medium', owner: 'Myname', avatar: '👩‍💼' },
+  { id: 3, name: 'Name 3 Lorem', status: 'Done', start: '01/02/2024', end: '01/02/2024', priority: 'High', owner: 'Myname', avatar: '👨‍🔬' },
+  { id: 4, name: 'Name 4 Lorem', status: 'Cancelled', start: '01/02/2024', end: '01/02/2024', priority: 'High', owner: 'Myname', avatar: '👩‍🔬' },
+  // Add more projects here to test pagination
+];
+
+const statusColors = {
+  Planning: 'bg-blue-100 text-blue-800',
+  WIP: 'bg-orange-100 text-orange-800',
+  Done: 'bg-green-100 text-green-800',
+  Cancelled: 'bg-red-100 text-red-800',
+};
+
+const priorityColors = {
+  Low: 'bg-yellow-100 text-yellow-800',
+  Medium: 'bg-orange-100 text-orange-800',
+  High: 'bg-red-100 text-red-800',
+};
+
+const ProjectTableView = () => {
+  const [projects, setProjects] = useState(initialProjectsData);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [editingProject, setEditingProject] = useState(null);
+  const projectsPerPage = 10;
+
+  const sortedProjects = React.useMemo(() => {
+    let sortableProjects = [...projects];
+    if (sortConfig.key !== null) {
+      sortableProjects.sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (a[sortConfig.key] > b[sortConfig.key]) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableProjects;
+  }, [projects, sortConfig]);
+
+  const filteredProjects = sortedProjects.filter(project =>
+    project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    project.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    project.priority.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    project.owner.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const indexOfLastProject = currentPage * projectsPerPage;
+  const indexOfFirstProject = indexOfLastProject - projectsPerPage;
+  const currentProjects = filteredProjects.slice(indexOfFirstProject, indexOfLastProject);
+
+  const totalPages = Math.ceil(filteredProjects.length / projectsPerPage);
+
+  const requestSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const handleEdit = (project) => {
+    setEditingProject({ ...project });
+  };
+
+  const handleSave = () => {
+    setProjects(projects.map(p => p.id === editingProject.id ? editingProject : p));
+    setEditingProject(null);
+  };
+
+  const handleCancel = () => {
+    setEditingProject(null);
+  };
+
+  const handleChange = (e) => {
+    setEditingProject({ ...editingProject, [e.target.name]: e.target.value });
+  };
+
+  return (
+    <div className="bg-gray-100 p-6 rounded-lg">
+      <div className="flex justify-between items-center mb-4">
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+        </div>
+        <div className="flex space-x-2">
+          <button className="bg-white p-2 rounded-full shadow hover:bg-gray-50">
+            <Filter size={20} />
+          </button>
+          <button className="bg-blue-500 text-white p-2 rounded-full shadow hover:bg-blue-600">
+            <Plus size={20} />
+          </button>
+        </div>
+      </div>
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <table className="min-w-full">
+          <thead>
+            <tr className="bg-gray-50 text-gray-600 text-sm leading-normal">
+              <th className="py-3 px-6 text-left cursor-pointer" onClick={() => requestSort('name')}>
+                Project {sortConfig.key === 'name' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+              </th>
+              <th className="py-3 px-6 text-left cursor-pointer" onClick={() => requestSort('status')}>
+                Status {sortConfig.key === 'status' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+              </th>
+              <th className="py-3 px-6 text-left cursor-pointer" onClick={() => requestSort('start')}>
+                Start {sortConfig.key === 'start' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+              </th>
+              <th className="py-3 px-6 text-left cursor-pointer" onClick={() => requestSort('end')}>
+                End {sortConfig.key === 'end' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+              </th>
+              <th className="py-3 px-6 text-left cursor-pointer" onClick={() => requestSort('priority')}>
+                Priority {sortConfig.key === 'priority' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+              </th>
+              <th className="py-3 px-6 text-left cursor-pointer" onClick={() => requestSort('owner')}>
+                Owner {sortConfig.key === 'owner' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+              </th>
+              <th className="py-3 px-6 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="text-gray-600 text-sm">
+            {currentProjects.map((project) => (
+              <tr key={project.id} className="border-b border-gray-200 hover:bg-gray-50">
+                <td className="py-3 px-6 text-left">
+                  {editingProject && editingProject.id === project.id ? (
+                    <input
+                      type="text"
+                      name="name"
+                      value={editingProject.name}
+                      onChange={handleChange}
+                      className="w-full p-1 border rounded"
+                    />
+                  ) : (
+                    <span className="font-medium">{project.name}</span>
+                  )}
+                </td>
+                <td className="py-3 px-6">
+                  {editingProject && editingProject.id === project.id ? (
+                    <select
+                      name="status"
+                      value={editingProject.status}
+                      onChange={handleChange}
+                      className="p-1 border rounded"
+                    >
+                      <option value="Planning">Planning</option>
+                      <option value="WIP">WIP</option>
+                      <option value="Done">Done</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  ) : (
+                    <span className={`${statusColors[project.status]} py-1 px-3 rounded-full text-xs`}>
+                      {project.status}
+                    </span>
+                  )}
+                </td>
+                <td className="py-3 px-6">
+                  {editingProject && editingProject.id === project.id ? (
+                    <input
+                      type="text"
+                      name="start"
+                      value={editingProject.start}
+                      onChange={handleChange}
+                      className="w-full p-1 border rounded"
+                    />
+                  ) : (
+                    project.start
+                  )}
+                </td>
+                <td className="py-3 px-6">
+                  {editingProject && editingProject.id === project.id ? (
+                    <input
+                      type="text"
+                      name="end"
+                      value={editingProject.end}
+                      onChange={handleChange}
+                      className="w-full p-1 border rounded"
+                    />
+                  ) : (
+                    project.end
+                  )}
+                </td>
+                <td className="py-3 px-6">
+                  {editingProject && editingProject.id === project.id ? (
+                    <select
+                      name="priority"
+                      value={editingProject.priority}
+                      onChange={handleChange}
+                      className="p-1 border rounded"
+                    >
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                    </select>
+                  ) : (
+                    <span className={`${priorityColors[project.priority]} py-1 px-3 rounded-full text-xs`}>
+                      {project.priority}
+                    </span>
+                  )}
+                </td>
+                <td className="py-3 px-6">
+                  <div className="flex items-center">
+                    <div className="mr-2">{project.avatar}</div>
+                    <span>{project.owner}</span>
+                  </div>
+                </td>
+                <td className="py-3 px-6">
+                  {editingProject && editingProject.id === project.id ? (
+                    <div className="flex space-x-2">
+                      <button onClick={handleSave} className="text-green-500 hover:text-green-700">
+                        <Check size={16} />
+                      </button>
+                      <button onClick={handleCancel} className="text-red-500 hover:text-red-700">
+                        <X size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => handleEdit(project)} className="text-blue-500 hover:text-blue-700">
+                      <Edit size={16} />
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="flex justify-between items-center mt-4">
+        <span className="text-sm text-gray-700">
+          Showing {indexOfFirstProject + 1} to {Math.min(indexOfLastProject, filteredProjects.length)} of {filteredProjects.length} projects
+        </span>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 bg-white rounded-full shadow disabled:opacity-50"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <button
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 bg-white rounded-full shadow disabled:opacity-50"
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ProjectTableView;
