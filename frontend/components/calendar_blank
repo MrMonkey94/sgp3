@@ -1,0 +1,133 @@
+import React, { useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+const Calendar = () => {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(null);
+
+  const daysOfWeek = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+
+  const getDaysInMonth = (date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date) => {
+    let firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+    return firstDay === 0 ? 6 : firstDay - 1; // Adjust Sunday from 0 to 6
+  };
+
+  const getWeekNumber = (date) => {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+  };
+
+  const handlePrevMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  };
+
+  const handleDateClick = (day) => {
+    setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day));
+  };
+
+  const renderCalendarDays = () => {
+    const daysInMonth = getDaysInMonth(currentDate);
+    const firstDayOfMonth = getFirstDayOfMonth(currentDate);
+    const weeks = [];
+    const today = new Date();
+
+    let currentWeek = [];
+    let day = 1;
+    let weekNumber = null;
+
+    // Add empty cells for days before the first of the month
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      currentWeek.push(<div key={`empty-${i}`} className="h-10"></div>);
+    }
+
+    while (day <= daysInMonth) {
+      if (currentWeek.length === 0) {
+        // Start of a new week, calculate week number
+        const weekDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+        weekNumber = getWeekNumber(weekDate);
+      }
+
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+      const isToday = date.toDateString() === today.toDateString();
+      const isSelected = selectedDate && date.toDateString() === selectedDate.toDateString();
+
+      currentWeek.push(
+        <div
+          key={day}
+          className={`
+            h-10 flex items-center justify-center cursor-pointer transition-all duration-200
+            hover:bg-gray-200 hover:rounded-full
+            ${isSelected && !isToday ? 'bg-blue-100 rounded-full' : ''}
+            ${isToday ? 'bg-blue-500 text-white font-bold rounded-full' : ''}
+          `}
+          onClick={() => handleDateClick(day)}
+        >
+          {day}
+        </div>
+      );
+
+      if (currentWeek.length === 7 || day === daysInMonth) {
+        // Week is complete or it's the last day of the month
+        weeks.push(
+          <React.Fragment key={`week-${weekNumber}`}>
+            <div className="h-10 flex items-center justify-center text-gray-500 text-sm">
+              {weekNumber}
+            </div>
+            {currentWeek}
+          </React.Fragment>
+        );
+        currentWeek = [];
+      }
+
+      day++;
+    }
+
+    return weeks;
+  };
+
+  return (
+    <div className="w-96 bg-white rounded-lg shadow-lg p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">
+          {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+        </h2>
+        <div className="flex space-x-2">
+          <button
+            onClick={handlePrevMonth}
+            className="p-1 rounded-full hover:bg-gray-200 transition-colors duration-200"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <button
+            onClick={handleNextMonth}
+            className="p-1 rounded-full hover:bg-gray-200 transition-colors duration-200"
+          >
+            <ChevronRight size={20} />
+          </button>
+        </div>
+      </div>
+      <div className="grid grid-cols-8 gap-1">
+        <div className="h-10 flex items-center justify-center text-gray-500 text-sm">Week</div>
+        {daysOfWeek.map((day) => (
+          <div key={day} className="h-10 flex items-center justify-center text-gray-500 text-sm">
+            {day}
+          </div>
+        ))}
+        {renderCalendarDays()}
+      </div>
+    </div>
+  );
+};
+
+export default Calendar;
