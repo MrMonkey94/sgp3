@@ -1,0 +1,138 @@
+import React, { useState } from 'react';
+import { Grid, Paper, Typography, List, ListItem, ListItemText, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
+
+const ProjectManagementDashboard = ({ projects }) => {
+    const [selectedProject, setSelectedProject] = useState('all');
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [selectedMonth, setSelectedMonth] = useState('all');
+
+    const filteredProjects = projects.filter(project => 
+        (selectedProject === 'all' || project.id === selectedProject) &&
+        (new Date(project.startDate).getFullYear() === selectedYear) &&
+        (selectedMonth === 'all' || new Date(project.startDate).getMonth() === selectedMonth - 1)
+    );
+
+    const projectData = filteredProjects.map(project => ({
+        name: project.name,
+        budget: project.budget,
+        progress: project.progress
+    }));
+
+    const statusData = [
+        { name: 'Completed', value: filteredProjects.filter(p => p.status === 'completed').length },
+        { name: 'In Progress', value: filteredProjects.filter(p => p.status === 'in_progress').length },
+        { name: 'Not Started', value: filteredProjects.filter(p => p.status === 'not_started').length },
+    ];
+
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
+
+    return (
+        <Grid container spacing={3}>
+            <Grid item xs={3}>
+                <Paper style={{ padding: '20px', height: '100%' }}>
+                    <Typography variant="h6" gutterBottom>Filters</Typography>
+                    <FormControl fullWidth margin="normal">
+                        <InputLabel>Project</InputLabel>
+                        <Select value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)}>
+                            <MenuItem value="all">All Projects</MenuItem>
+                            {projects.map(project => (
+                                <MenuItem key={project.id} value={project.id}>{project.name}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <FormControl fullWidth margin="normal">
+                        <InputLabel>Year</InputLabel>
+                        <Select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)}>
+                            {[...Array(5)].map((_, i) => {
+                                const year = new Date().getFullYear() - i;
+                                return <MenuItem key={year} value={year}>{year}</MenuItem>;
+                            })}
+                        </Select>
+                    </FormControl>
+                    <FormControl fullWidth margin="normal">
+                        <InputLabel>Month</InputLabel>
+                        <Select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)}>
+                            <MenuItem value="all">All Months</MenuItem>
+                            {[...Array(12)].map((_, i) => (
+                                <MenuItem key={i+1} value={i+1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Paper>
+            </Grid>
+            <Grid item xs={6}>
+                <Paper style={{ padding: '20px', height: '100%' }}>
+                    <Typography variant="h6" gutterBottom>Project Budget vs Progress</Typography>
+                    <BarChart width={500} height={300} data={projectData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="budget" fill="#8884d8" />
+                        <Bar dataKey="progress" fill="#82ca9d" />
+                    </BarChart>
+                </Paper>
+            </Grid>
+            <Grid item xs={3}>
+                <Paper style={{ padding: '20px', height: '100%' }}>
+                    <Typography variant="h6" gutterBottom>Project Status</Typography>
+                    <PieChart width={300} height={300}>
+                        <Pie
+                            data={statusData}
+                            cx={150}
+                            cy={150}
+                            labelLine={false}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                        >
+                            {statusData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                    </PieChart>
+                </Paper>
+            </Grid>
+            <Grid item xs={12}>
+                <Paper style={{ padding: '20px' }}>
+                    <Typography variant="h6" gutterBottom>Project List</Typography>
+                    <List>
+                        {filteredProjects.map(project => (
+                            <ListItem key={project.id}>
+                                <ListItemText 
+                                    primary={project.name} 
+                                    secondary={`Status: ${project.status} | Budget: $${project.budget} | Progress: ${project.progress}%`} 
+                                />
+                            </ListItem>
+                        ))}
+                    </List>
+                </Paper>
+            </Grid>
+        </Grid>
+    );
+};
+
+export default ProjectManagementDashboard;
+
+// Add the following import statements at the top of your file
+import '@emotion/react';
+import '@emotion/styled';
+
+// If you're using a bundler that supports package.json resolution, you can add these to your package.json:
+// "dependencies": {
+//   "@emotion/react": "^11.10.5",
+//   "@emotion/styled": "^11.10.5"
+// }
+
+// Then run npm install or yarn install to install these dependencies
+
+// If you're still encountering issues, you may need to update your MUI installation:
+// npm install @mui/material @emotion/react @emotion/styled
+// or
+// yarn add @mui/material @emotion/react @emotion/styled
+
+// No changes needed in the component code itself
