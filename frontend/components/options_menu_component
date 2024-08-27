@@ -1,0 +1,71 @@
+import React, { useState } from 'react';
+import { X, Grid, Layout, List, Filter, ArrowUpDown, Grid3X3, Zap, Download, Settings, Lock, Link, Copy, Trash2, ChevronRight } from 'lucide-react';
+
+const ViewOptionsDropdown = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const menuItems = [
+    { icon: Grid, label: 'View name', info: true },
+    { icon: Layout, label: 'Layout', value: 'Table', hasSubmenu: true },
+    { icon: List, label: 'Properties', value: '6 shown', hasSubmenu: true },
+    { icon: Filter, label: 'Filter', value: '1 filter', hasSubmenu: true },
+    { icon: ArrowUpDown, label: 'Sort', value: 'None', hasSubmenu: true },
+    { icon: Grid3X3, label: 'Group', value: 'None', hasSubmenu: true },
+    { icon: Zap, label: 'Automations', value: 'None', hasSubmenu: true },
+    { icon: Download, label: 'Load limit', value: '50 pages', hasSubmenu: true },
+    { icon: Settings, label: 'Customize AZCATEC KPIs', subLabel: 'Change settings, add new features', hasSubmenu: true },
+    { icon: Lock, label: 'Lock database' },
+    { icon: Link, label: 'Copy link to view' },
+    { icon: Copy, label: 'Duplicate view' },
+    { icon: Trash2, label: 'Delete view' },
+  ];
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+      >
+        New
+      </button>
+
+      {isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-96 max-w-full">
+            <div className="py-3 px-4 flex justify-between items-center border-b border-gray-200">
+              <h3 className="text-xl font-semibold">View options</h3>
+              <button onClick={() => setIsOpen(false)} className="text-gray-500 hover:text-gray-700">
+                <X size={24} />
+              </button>
+            </div>
+            <div className="py-2 max-h-[80vh] overflow-y-auto">
+              {menuItems.map((item, index) => (
+                <div
+                  key={index}
+                  className="px-4 py-3 hover:bg-gray-100 flex items-center justify-between cursor-pointer"
+                >
+                  <div className="flex items-center">
+                    <item.icon size={20} className="text-gray-600 mr-4" />
+                    <div>
+                      <span className="text-base">{item.label}</span>
+                      {item.subLabel && (
+                        <p className="text-sm text-gray-500">{item.subLabel}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    {item.value && <span className="text-sm text-gray-600 mr-2">{item.value}</span>}
+                    {item.hasSubmenu && <ChevronRight size={18} className="text-gray-400" />}
+                    {item.info && <span className="text-gray-400 text-xl ml-2">ⓘ</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ViewOptionsDropdown;
