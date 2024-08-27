@@ -1,0 +1,198 @@
+import React, { useState, useEffect } from 'react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { Calendar, List, BarChart2, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
+
+const projectsData = [
+  { id: 1, name: 'Project A', startDate: '2024-01-01', endDate: '2024-03-31' },
+  { id: 2, name: 'Project B', startDate: '2024-02-15', endDate: '2024-05-15' },
+  { id: 3, name: 'Project C', startDate: '2024-03-01', endDate: '2024-06-30' },
+];
+
+const ganttData = projectsData.map(project => ({
+  name: project.name,
+  start: new Date(project.startDate).getTime(),
+  end: new Date(project.endDate).getTime(),
+}));
+
+// Function to generate mock data for a given date range
+const generateMockData = (startDate, endDate) => {
+  const data = {};
+  let currentDate = new Date(startDate);
+  while (currentDate <= new Date(endDate)) {
+    const dateString = currentDate.toISOString().split('T')[0];
+    data[dateString] = Math.floor(Math.random() * 9); // 0-8 hours
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  return data;
+};
+
+const ProjectManagementDashboard = () => {
+  const [activeTab, setActiveTab] = useState('calendar');
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [calendarData, setCalendarData] = useState({});
+  const [selectedDay, setSelectedDay] = useState(null);
+
+  useEffect(() => {
+    const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+    setCalendarData(generateMockData(startDate, endDate));
+  }, [currentDate]);
+
+  const NavItem = ({ icon: Icon, label, tabName }) => (
+    <div
+      className={`flex items-center p-4 cursor-pointer ${
+        activeTab === tabName ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'
+      }`}
+      onClick={() => setActiveTab(tabName)}
+    >
+      <Icon className="mr-2" />
+      <span>{label}</span>
+    </div>
+  );
+
+  const getHighlightColor = (hours) => {
+    if (hours >= 8) return 'bg-green-500';
+    if (hours >= 6) return 'bg-green-400';
+    if (hours >= 4) return 'bg-green-300';
+    if (hours > 0) return 'bg-green-200';
+    return 'bg-gray-100';
+  };
+
+  const CalendarView = () => {
+    const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+    const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
+
+    const handlePrevMonth = () => {
+      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    };
+
+    const handleNextMonth = () => {
+      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    };
+
+    const handleDayClick = (day) => {
+      const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+      const dateString = clickedDate.toISOString().split('T')[0];
+      setSelectedDay({ date: dateString, hours: calendarData[dateString] || 0 });
+    };
+
+    return (
+      <div className="bg-white p-6 rounded-lg shadow">
+        <div className="flex justify-between items-center mb-4">
+          <button onClick={handlePrevMonth} className="p-2"><ChevronLeft /></button>
+          <h2 className="text-2xl font-bold">
+            {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+          </h2>
+          <button onClick={handleNextMonth} className="p-2"><ChevronRight /></button>
+        </div>
+        <div className="grid grid-cols-7 gap-2">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+            <div key={day} className="text-center font-semibold text-gray-500">{day}</div>
+          ))}
+          {[...Array(firstDayOfMonth)].map((_, index) => (
+            <div key={`empty-${index}`} className="h-12"></div>
+          ))}
+          {[...Array(daysInMonth)].map((_, index) => {
+            const day = index + 1;
+            const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toISOString().split('T')[0];
+            const hours = calendarData[date] || 0;
+            return (
+              <div
+                key={day}
+                className={`h-12 flex items-center justify-center rounded-lg ${getHighlightColor(hours)} cursor-pointer`}
+                onClick={() => handleDayClick(day)}
+              >
+                {day}
+              </div>
+            );
+          })}
+        </div>
+        {selectedDay && (
+          <div className="mt-4 p-4 bg-gray-100 rounded-lg">
+            <h3 className="font-bold">Selected Day: {selectedDay.date}</h3>
+            <p>Hours worked: {selectedDay.hours}</p>
+          </div>
+        )}
+        <div className="mt-4 flex flex-wrap gap-2">
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-gray-100 mr-2"></div>
+            <span>0 hours</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-green-200 mr-2"></div>
+            <span>1-3 hours</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-green-300 mr-2"></div>
+            <span>4-5 hours</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-green-400 mr-2"></div>
+            <span>6-7 hours</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-green-500 mr-2"></div>
+            <span>8+ hours</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex h-screen bg-gray-100">
+      {/* Left Navigation Bar */}
+      <nav className="w-64 bg-white shadow-lg">
+        <div className="p-4 font-bold text-xl">Project Dashboard</div>
+        <NavItem icon={List} label="Projects" tabName="projects" />
+        <NavItem icon={BarChart2} label="Gantt Chart" tabName="gantt" />
+        <NavItem icon={Calendar} label="Calendar" tabName="calendar" />
+        <NavItem icon={Settings} label="Settings" tabName="settings" />
+      </nav>
+
+      {/* Main Content Area */}
+      <main className="flex-1 p-8 overflow-auto">
+        {activeTab === 'projects' && (
+          <div>
+            <h2 className="text-2xl font-bold mb-4">Projects</h2>
+            <ul className="bg-white rounded-lg shadow">
+              {projectsData.map(project => (
+                <li key={project.id} className="p-4 border-b last:border-b-0">
+                  <h3 className="font-semibold">{project.name}</h3>
+                  <p className="text-sm text-gray-600">
+                    {project.startDate} - {project.endDate}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {activeTab === 'gantt' && (
+          <div>
+            <h2 className="text-2xl font-bold mb-4">Gantt Chart</h2>
+            <div className="bg-white p-4 rounded-lg shadow" style={{ height: '400px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={ganttData} layout="vertical">
+                  <XAxis type="number" dataKey="start" domain={['dataMin', 'dataMax']} tickFormatter={(unixTime) => new Date(unixTime).toLocaleDateString()} />
+                  <YAxis type="category" dataKey="name" width={100} />
+                  <Tooltip
+                    labelFormatter={(value) => `Project: ${value}`}
+                    formatter={(value) => [new Date(value).toLocaleDateString(), 'Date']}
+                  />
+                  <Bar dataKey="start" stackId="a" fill="#8884d8" />
+                  <Bar dataKey="end" stackId="a" fill="#82ca9d" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'calendar' && <CalendarView />}
+        {activeTab === 'settings' && <div className="text-xl">Settings (not implemented)</div>}
+      </main>
+    </div>
+  );
+};
+
+export default ProjectManagementDashboard;
