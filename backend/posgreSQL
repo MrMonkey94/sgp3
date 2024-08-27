@@ -1,0 +1,233 @@
+create table users (
+  id bigint primary key generated always as identity,
+  username text not null unique,
+  email text not null unique,
+  password text not null,
+  created_at timestamp with time zone default now() not null
+);
+
+create table employees (
+  id bigint primary key generated always as identity,
+  user_id bigint references users (id),
+  first_name text not null,
+  last_name text not null,
+  "position" text not null,
+  department text not null,
+  salary numeric not null,
+  hire_date date not null,
+  created_at timestamp with time zone default now() not null
+);
+
+create table projects (
+  id bigint primary key generated always as identity,
+  name text not null,
+  description text,
+  start_date date not null,
+  end_date date,
+  created_at timestamp with time zone default now() not null
+);
+
+create table project_assignments (
+  id bigint primary key generated always as identity,
+  project_id bigint references projects (id),
+  employee_id bigint references employees (id),
+  assigned_at timestamp with time zone default now() not null
+);
+
+create table finance (
+  id bigint primary key generated always as identity,
+  transaction_date date not null,
+  amount numeric not null,
+  description text,
+  created_at timestamp with time zone default now() not null
+);
+
+create table accounting (
+  id bigint primary key generated always as identity,
+  finance_id bigint references finance (id),
+  account_name text not null,
+  debit numeric not null,
+  credit numeric not null,
+  created_at timestamp with time zone default now() not null
+);
+
+alter table projects
+add column revenue numeric;
+
+alter table projects
+add column cost numeric;
+
+alter table accounting
+add column project_id bigint references projects (id);
+
+create table activities (
+  id bigint primary key generated always as identity,
+  project_id bigint references projects (id),
+  name text not null,
+  description text,
+  start_date date not null,
+  end_date date,
+  hours_worked numeric not null default 0,
+  created_at timestamp with time zone default now() not null
+);
+
+create table deliverables (
+  id bigint primary key generated always as identity,
+  project_id bigint references projects (id),
+  name text not null,
+  description text,
+  due_date date not null,
+  created_at timestamp with time zone default now() not null
+);
+
+alter table accounting
+add column activity_id bigint references activities (id);
+
+create table clients (
+  id bigint primary key generated always as identity,
+  name text not null,
+  email text not null unique,
+  phone text,
+  address text,
+  created_at timestamp with time zone default now() not null
+);
+
+create table sales (
+  id bigint primary key generated always as identity,
+  client_id bigint references clients (id),
+  project_id bigint references projects (id),
+  amount numeric not null,
+  sale_date date not null,
+  created_at timestamp with time zone default now() not null
+);
+
+create table marketing_campaigns (
+  id bigint primary key generated always as identity,
+  name text not null,
+  description text,
+  start_date date not null,
+  end_date date,
+  budget numeric not null,
+  created_at timestamp with time zone default now() not null
+);
+
+create table campaign_clients (
+  id bigint primary key generated always as identity,
+  campaign_id bigint references marketing_campaigns (id),
+  client_id bigint references clients (id),
+  contacted_at timestamp with time zone default now() not null
+);
+
+alter table projects
+add column client_id bigint references clients (id);
+
+create table documents (
+  id bigint primary key generated always as identity,
+  project_id bigint references projects (id),
+  deliverable_id bigint references deliverables (id),
+  activity_id bigint references activities (id),
+  user_id bigint references users (id),
+  name text not null,
+  content text,
+  created_at timestamp with time zone default now() not null
+);
+
+create table document_metadata (
+  id bigint primary key generated always as identity,
+  document_id bigint references documents (id),
+  key text not null,
+  value text not null,
+  created_at timestamp with time zone default now() not null
+);
+
+create table document_revisions (
+  id bigint primary key generated always as identity,
+  document_id bigint references documents (id),
+  revision_number int not null,
+  content text,
+  created_at timestamp with time zone default now() not null
+);
+
+create table change_orders (
+  id bigint primary key generated always as identity,
+  project_id bigint references projects (id),
+  description text not null,
+  change_date date not null,
+  created_at timestamp with time zone default now() not null
+);
+
+create table project_master_data (
+  id bigint primary key generated always as identity,
+  project_id bigint references projects (id),
+  key text not null,
+  value text not null,
+  created_at timestamp with time zone default now() not null
+);
+
+alter table projects
+add column status text not null default 'Not Started';
+
+create table suppliers (
+  id bigint primary key generated always as identity,
+  name text not null,
+  email text not null unique,
+  phone text,
+  address text,
+  created_at timestamp with time zone default now() not null
+);
+
+create table supplier_contacts (
+  id bigint primary key generated always as identity,
+  supplier_id bigint references suppliers (id),
+  contact_name text not null,
+  contact_email text not null unique,
+  contact_phone text,
+  "position" text,
+  created_at timestamp with time zone default now() not null
+);
+
+alter table employees
+add column surname text;
+
+alter table clients
+add column surname text;
+
+alter table supplier_contacts
+add column surname text;
+
+create table purchases (
+  id bigint primary key generated always as identity,
+  supplier_id bigint references suppliers (id),
+  purchase_date date not null,
+  total_amount numeric not null,
+  description text,
+  created_at timestamp with time zone default now() not null
+);
+
+create table purchase_items (
+  id bigint primary key generated always as identity,
+  purchase_id bigint references purchases (id),
+  item_name text not null,
+  quantity int not null,
+  unit_price numeric not null,
+  created_at timestamp with time zone default now() not null
+);
+
+create table inventory (
+  id bigint primary key generated always as identity,
+  item_name text not null,
+  quantity int not null,
+  unit_price numeric not null,
+  supplier_id bigint references suppliers (id),
+  purchase_id bigint references purchases (id),
+  created_at timestamp with time zone default now() not null
+);
+
+create table inventory_movements (
+  id bigint primary key generated always as identity,
+  inventory_id bigint references inventory (id),
+  movement_type text not null check (movement_type in ('IN', 'OUT')),
+  quantity int not null,
+  movement_date date not null,
+  created_at timestamp with time zone default now() not null
+);
