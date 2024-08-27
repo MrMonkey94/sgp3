@@ -1,0 +1,252 @@
+import React, { useState } from 'react';
+import { Calendar, List, Clock, Settings, ChevronLeft, ChevronRight, Plus, Search, Edit, Trash2, Check, X } from 'lucide-react';
+
+const initialProjectsData = [
+  { id: 1, name: 'Project 1 name', priority: 'Low', startDate: '2024-06-20', status: 'Planning', completionRatio: '0/7', avatar: '👨‍💼' },
+  { id: 2, name: 'Project 2 name', priority: 'Medium', startDate: '2024-06-20', status: 'Planning', completionRatio: '0/8', avatar: '👩‍💼' },
+  { id: 3, name: 'Project 3 name', priority: 'Medium', startDate: '2024-06-20', status: 'WIP', completionRatio: '4/8', avatar: '👨‍💻' },
+  { id: 4, name: 'Project 4 name', priority: 'Low', startDate: '2024-06-20', status: 'WIP', completionRatio: '3/18', avatar: '👩‍🔬' },
+  { id: 5, name: 'Project 5 name', priority: 'Medium', startDate: '2024-06-20', status: 'Done', completionRatio: '5/9', avatar: '👨‍🎨' },
+  { id: 6, name: 'Project 6 name', priority: 'High', startDate: '2024-06-20', status: 'Done', completionRatio: '10/10', avatar: '👩‍🚀' },
+  { id: 7, name: 'Project 7 name', priority: 'Low', startDate: '2024-06-20', status: 'Done', completionRatio: '8/8', avatar: '👨‍🍳' },
+  { id: 8, name: 'Project 8 name', priority: 'High', startDate: '2024-06-20', status: 'Cancelled', completionRatio: '', avatar: '👩‍🏫' }
+];
+
+const priorityColors = {
+  Low: 'bg-yellow-200 text-yellow-800',
+  Medium: 'bg-orange-200 text-orange-800',
+  High: 'bg-red-200 text-red-800'
+};
+
+const statusColors = {
+  Planning: 'bg-blue-100 text-blue-800',
+  WIP: 'bg-orange-100 text-orange-800',
+  Done: 'bg-green-100 text-green-800',
+  Cancelled: 'bg-red-100 text-red-800'
+};
+
+const ProjectManagementDashboard = () => {
+  const [activeTab, setActiveTab] = useState('board');
+  const [projectsData, setProjectsData] = useState(initialProjectsData);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [editingProject, setEditingProject] = useState(null);
+  const [draggingProject, setDraggingProject] = useState(null);
+
+  const NavItem = ({ icon: Icon, label, tabName }) => (
+    <div
+      className={`flex items-center p-4 cursor-pointer ${
+        activeTab === tabName ? 'bg-blue-100 text-blue-600' : 'hover:bg-gray-100'
+      }`}
+      onClick={() => setActiveTab(tabName)}
+    >
+      <Icon className="mr-2" />
+      <span>{label}</span>
+    </div>
+  );
+
+  const handleDragStart = (e, project) => {
+    e.dataTransfer.setData('text/plain', project.id);
+    setDraggingProject(project);
+    setTimeout(() => {
+      e.target.classList.add('dragging');
+    }, 0);
+  };
+
+  const handleDragEnd = (e) => {
+    e.target.classList.remove('dragging');
+    setDraggingProject(null);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.currentTarget.classList.add('drag-over');
+  };
+
+  const handleDragLeave = (e) => {
+    e.currentTarget.classList.remove('drag-over');
+  };
+
+  const handleDrop = (e, status) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    const projectId = e.dataTransfer.getData('text');
+    const updatedProjects = projectsData.map(project => 
+      project.id.toString() === projectId ? { ...project, status } : project
+    );
+    setProjectsData(updatedProjects);
+  };
+
+  const handleEditProject = (project) => {
+    setEditingProject({ ...project });
+  };
+
+  const handleSaveEdit = () => {
+    setProjectsData(projectsData.map(p => p.id === editingProject.id ? editingProject : p));
+    setEditingProject(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingProject(null);
+  };
+
+  const handleEditChange = (e) => {
+    setEditingProject({ ...editingProject, [e.target.name]: e.target.value });
+  };
+
+  const BoardView = () => {
+    const columns = ['Planning', 'WIP', 'Done', 'Cancelled'];
+
+    return (
+      <div className="flex space-x-4 overflow-x-auto pb-4">
+        {columns.map(column => (
+          <div 
+            key={column} 
+            className="flex-shrink-0 w-72 transition-all duration-300 ease-in-out"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, column)}
+          >
+            <div className={`${statusColors[column]} px-3 py-2 rounded-t-lg flex justify-between items-center`}>
+              <span className="font-bold">{column}</span>
+              <span className="bg-white text-gray-800 px-2 py-1 rounded-full text-sm">
+                {projectsData.filter(p => p.status === column).length}
+              </span>
+            </div>
+            <div className="bg-gray-100 p-2 rounded-b-lg min-h-[calc(100vh-200px)]">
+              {projectsData
+                .filter(project => project.status === column && project.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                .map(project => (
+                  <div 
+                    key={project.id} 
+                    className={`bg-white p-3 rounded-lg shadow mb-2 cursor-move transition-all duration-300 ease-in-out
+                                ${draggingProject && draggingProject.id === project.id ? 'opacity-50 transform scale-105' : 'opacity-100 scale-100'}`}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, project)}
+                    onDragEnd={handleDragEnd}
+                  >
+                    {editingProject && editingProject.id === project.id ? (
+                      <div>
+                        <input
+                          type="text"
+                          name="name"
+                          value={editingProject.name}
+                          onChange={handleEditChange}
+                          className="w-full mb-2 p-1 border rounded"
+                        />
+                        <div className="flex justify-between items-center mb-2">
+                          <select
+                            name="priority"
+                            value={editingProject.priority}
+                            onChange={handleEditChange}
+                            className="p-1 border rounded"
+                          >
+                            <option value="Low">Low</option>
+                            <option value="Medium">Medium</option>
+                            <option value="High">High</option>
+                          </select>
+                          <input
+                            type="text"
+                            name="completionRatio"
+                            value={editingProject.completionRatio}
+                            onChange={handleEditChange}
+                            className="w-20 p-1 border rounded"
+                          />
+                        </div>
+                        <div className="flex justify-end space-x-2">
+                          <button onClick={handleSaveEdit} className="p-1 bg-green-500 text-white rounded">
+                            <Check size={16} />
+                          </button>
+                          <button onClick={handleCancelEdit} className="p-1 bg-red-500 text-white rounded">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-bold">{project.name}</span>
+                          <span className="text-2xl">{project.avatar}</span>
+                        </div>
+                        <div className="text-sm text-gray-500 mb-2">{project.startDate}</div>
+                        <div className="flex justify-between items-center">
+                          <span className={`${priorityColors[project.priority]} px-2 py-1 rounded-full text-xs`}>
+                            {project.priority}
+                          </span>
+                          <span className="text-sm font-medium">{project.completionRatio}</span>
+                        </div>
+                        <button
+                          onClick={() => handleEditProject(project)}
+                          className="mt-2 p-1 bg-blue-500 text-white rounded transition-colors duration-300 ease-in-out hover:bg-blue-600"
+                        >
+                          <Edit size={16} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex h-screen bg-gray-100">
+      <nav className="w-64 bg-white shadow-lg">
+        <div className="p-4 font-bold text-xl">Project Dashboard</div>
+        <NavItem icon={List} label="Board" tabName="board" />
+        <NavItem icon={Clock} label="Timeline" tabName="timeline" />
+        <NavItem icon={List} label="All" tabName="all" />
+        <NavItem icon={Calendar} label="Calendar" tabName="calendar" />
+        <NavItem icon={Settings} label="Settings" tabName="settings" />
+      </nav>
+      <main className="flex-1 p-8 overflow-auto">
+        <div className="mb-4 flex justify-between items-center">
+          <button
+            onClick={() => setEditingProject({ id: Date.now(), name: '', priority: 'Low', startDate: new Date().toISOString().split('T')[0], status: 'Planning', completionRatio: '0/0', avatar: '👤' })}
+            className="bg-blue-500 text-white px-4 py-2 rounded flex items-center"
+          >
+            <Plus size={20} className="mr-2" /> Add Project
+          </button>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search projects..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border rounded-full"
+            />
+            <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          </div>
+        </div>
+        {activeTab === 'board' && <BoardView />}
+        {activeTab === 'timeline' && <div>Timeline View (not implemented)</div>}
+        {activeTab === 'all' && <div>All Projects View (not implemented)</div>}
+        {activeTab === 'calendar' && <div>Calendar View (not implemented)</div>}
+        {activeTab === 'settings' && <div>Settings View (not implemented)</div>}
+      </main>
+      <style jsx global>{`
+        .dragging {
+          opacity: 0.5;
+          transform: scale(1.05);
+        }
+        .drag-over {
+          border: 2px dashed #4a5568;
+          background-color: #e2e8f0;
+        }
+        @keyframes wiggle {
+          0% { transform: rotate(0deg); }
+          25% { transform: rotate(1deg); }
+          75% { transform: rotate(-1deg); }
+          100% { transform: rotate(0deg); }
+        }
+        .dragging:not(.drag-over) {
+          animation: wiggle 0.3s ease-in-out infinite;
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default ProjectManagementDashboard;
