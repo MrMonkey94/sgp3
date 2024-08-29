@@ -1,0 +1,302 @@
+import { useState } from "react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { CalendarIcon, AlertTriangleIcon, UserIcon, SearchIcon, ArrowUpDownIcon, MoreHorizontalIcon, PlusIcon } from "lucide-react"
+
+const statusColors = {
+  Planning: "bg-blue-100 text-blue-800",
+  WIP: "bg-yellow-100 text-yellow-800",
+  Done: "bg-green-100 text-green-800",
+  Cancelled: "bg-red-100 text-red-800",
+}
+
+const priorityColors = {
+  Low: "bg-green-100 text-green-800",
+  Medium: "bg-yellow-100 text-yellow-800",
+  High: "bg-red-100 text-red-800",
+}
+
+const StatusBadge = ({ status, onChange }) => (
+  <Badge 
+    className={`${statusColors[status]} font-medium cursor-pointer`}
+    onClick={() => onChange(["Planning", "WIP", "Done", "Cancelled"][(["Planning", "WIP", "Done", "Cancelled"].indexOf(status) + 1) % 4])}
+  >
+    {status}
+  </Badge>
+)
+
+const PriorityBadge = ({ priority, onChange }) => (
+  <Badge 
+    className={`${priorityColors[priority]} font-medium cursor-pointer`}
+    onClick={() => onChange(["Low", "Medium", "High"][(["Low", "Medium", "High"].indexOf(priority) + 1) % 3])}
+  >
+    {priority}
+  </Badge>
+)
+
+const EditableCell = ({ value, onChange }) => {
+  const [isEditing, setIsEditing] = useState(false)
+  const [editValue, setEditValue] = useState(value)
+
+  const handleBlur = () => {
+    setIsEditing(false)
+    onChange(editValue)
+  }
+
+  if (isEditing) {
+    return (
+      <Input
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onBlur={handleBlur}
+        autoFocus
+      />
+    )
+  }
+
+  return (
+    <div 
+      className="cursor-pointer hover:bg-gray-100 p-1 rounded"
+      onClick={() => setIsEditing(true)}
+    >
+      {value}
+    </div>
+  )
+}
+
+const initialProjects = [
+  {
+    id: 1,
+    name: "Project 1 Lorem Ipsum",
+    status: "Planning",
+    startDate: "01/02/2024",
+    endDate: "01/02/2024",
+    priority: "Low",
+    owner: {
+      name: "John Doe",
+      avatar: "/placeholder.svg?height=32&width=32",
+    },
+  },
+  {
+    id: 2,
+    name: "Project 2 Lorem Ipsum",
+    status: "WIP",
+    startDate: "01/02/2024",
+    endDate: "01/02/2024",
+    priority: "Medium",
+    owner: {
+      name: "Jane Smith",
+      avatar: "/placeholder.svg?height=32&width=32",
+    },
+  },
+  {
+    id: 3,
+    name: "Name 3 Lorem",
+    status: "Done",
+    startDate: "01/02/2024",
+    endDate: "01/02/2024",
+    priority: "High",
+    owner: {
+      name: "Alice Johnson",
+      avatar: "/placeholder.svg?height=32&width=32",
+    },
+  },
+  {
+    id: 4,
+    name: "Name 4 Lorem",
+    status: "Cancelled",
+    startDate: "01/02/2024",
+    endDate: "01/02/2024",
+    priority: "High",
+    owner: {
+      name: "Bob Brown",
+      avatar: "/placeholder.svg?height=32&width=32",
+    },
+  },
+]
+
+export default function Component() {
+  const [projects, setProjects] = useState(initialProjects)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [sortColumn, setSortColumn] = useState(null)
+  const [sortDirection, setSortDirection] = useState("asc")
+
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
+    } else {
+      setSortColumn(column)
+      setSortDirection("asc")
+    }
+  }
+
+  const sortedProjects = [...projects].sort((a, b) => {
+    if (!sortColumn) return 0
+    const aValue = a[sortColumn]
+    const bValue = b[sortColumn]
+    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1
+    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1
+    return 0
+  })
+
+  const filteredProjects = sortedProjects.filter(project =>
+    project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    project.owner.name.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const updateProject = (id, field, value) => {
+    setProjects(projects.map(project => 
+      project.id === id ? { ...project, [field]: value } : project
+    ))
+  }
+
+  const addProject = (newProject) => {
+    setProjects([...projects, { ...newProject, id: projects.length + 1 }])
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center space-x-4">
+        <div className="relative flex-grow">
+          <SearchIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <Input
+            className="pl-8"
+            placeholder="Search projects or owners"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <Button onClick={() => handleSort("name")} variant="outline" size="icon">
+          <ArrowUpDownIcon className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="icon">
+          <MoreHorizontalIcon className="h-4 w-4" />
+        </Button>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Add Project
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Project</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={(e) => {
+              e.preventDefault()
+              const formData = new FormData(e.target)
+              const newProject = Object.fromEntries(formData.entries())
+              addProject({
+                ...newProject,
+                owner: { name: newProject.ownerName, avatar: "/placeholder.svg?height=32&width=32" }
+              })
+            }}>
+              <div className="grid gap-4 py-4">
+                <Input name="name" placeholder="Project Name" required />
+                <Input name="status" placeholder="Status" required />
+                <Input name="startDate" placeholder="Start Date" required />
+                <Input name="endDate" placeholder="End Date" required />
+                <Input name="priority" placeholder="Priority" required />
+                <Input name="ownerName" placeholder="Owner Name" required />
+              </div>
+              <Button type="submit">Add Project</Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse bg-white shadow-sm rounded-lg">
+          <thead>
+            <tr className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 cursor-pointer" onClick={() => handleSort("name")}>Project</th>
+              <th className="px-6 py-3">
+                <div className="flex items-center">
+                  <CalendarIcon className="w-4 h-4 mr-2" />
+                  Status
+                </div>
+              </th>
+              <th className="px-6 py-3">
+                <div className="flex items-center">
+                  <CalendarIcon className="w-4 h-4 mr-2" />
+                  Start
+                </div>
+              </th>
+              <th className="px-6 py-3">
+                <div className="flex items-center">
+                  <CalendarIcon className="w-4 h-4 mr-2" />
+                  End
+                </div>
+              </th>
+              <th className="px-6 py-3">
+                <div className="flex items-center">
+                  <AlertTriangleIcon className="w-4 h-4 mr-2" />
+                  Priority
+                </div>
+              </th>
+              <th className="px-6 py-3">
+                <div className="flex items-center">
+                  <UserIcon className="w-4 h-4 mr-2" />
+                  Owner
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {filteredProjects.map((project) => (
+              <tr key={project.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <EditableCell
+                    value={project.name}
+                    onChange={(value) => updateProject(project.id, "name", value)}
+                  />
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <StatusBadge
+                    status={project.status}
+                    onChange={(value) => updateProject(project.id, "status", value)}
+                  />
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <EditableCell
+                    value={project.startDate}
+                    onChange={(value) => updateProject(project.id, "startDate", value)}
+                  />
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <EditableCell
+                    value={project.endDate}
+                    onChange={(value) => updateProject(project.id, "endDate", value)}
+                  />
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <PriorityBadge
+                    priority={project.priority}
+                    onChange={(value) => updateProject(project.id, "priority", value)}
+                  />
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={project.owner.avatar} alt={project.owner.name} />
+                      <AvatarFallback>{project.owner.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="ml-4">
+                      <EditableCell
+                        value={project.owner.name}
+                        onChange={(value) => updateProject(project.id, "owner", { ...project.owner, name: value })}
+                      />
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
